@@ -1,0 +1,14 @@
+name: px-orng-coinflip-escrow
+track: contract-examples
+trust: educational-reference
+tested: [invariants/coinflip.ts, client/requestrand-action.ts]
+not_run: [orng.wax, cdt-cpp, broadcast, rng credit stake]
+edge_bps: 200
+payout: stake * 19600 / 10000
+byte: first byte of checksum256 hex
+accept_below: 254
+heads_below: 127
+callbacks: [receiverand, randnotify]
+same_bytes: no second payout
+different_bytes: refused
+reject: status rerequest, funds stay escrowed, signing value is not reused
