@@ -1,33 +1,26 @@
 # px-orng-coinflip-escrow
 
-House-edge coin flip escrow for an `orng.wax` result. Private. Not deployed. `orng.wax` was not called.
+Quest 004. Tier B. Wager escrow for a two-outcome flip on `orng.wax` v3.
 
-## What is true
+Catalog: [px-contract-examples-vault](https://github.com/pixel-journey/px-contract-examples-vault).
 
-The player calls heads. The first byte of the 32-byte random value is the draw. That is byte 0 of the checksum, not `uint64 % 2`.
+## What is on-chain
 
-| Byte | Result |
-| --- | --- |
-| 0–126 | heads |
-| 127–253 | tails |
-| 254–255 | rejected |
+- Native WAX only (`eosio.token`, 8 decimals). Memo `flip:0` or `flip:1`. Minimum 1.00000000 WAX.
+- Memo `fund_house` accepts WAX and does not open a bet. The house bankroll is the contract balance.
+- `requestrand(assoc_id, signing_value, caller)` uses the transaction id mixed with the assoc id. The bet row is written before the request.
+- `on_notify(orng.wax::randnotify)` ignores deliveries whose `dapp` is not this contract.
+- Legacy `receiverand` requires `orng.wax`. Both paths call one resolver and erase the row, so a second delivery is a no-op.
+- Uniform bit from rejection sampling, depth capped at 8. House edge is basis points on the gross 2x, computed in `int128`.
 
-127 heads and 127 tails. Two values are rejected so the split is even. A rejected draw does not pay and does not take the stake. Status becomes `rerequest`. The next request needs a new signing value. The old one stays used.
+## What is not done
 
-Payout on heads is `stake * 19600 / 10000` (integer division). That is `2 * (10000 - 200) / 10000`. 10000 pays 19600. 1 pays 1. 3 pays 5. The remainder is not rounded up.
+- No solvency check. A win larger than the bankroll fails inside `eosio.token` and reverts the resolution. The bet row stays, and ORNG will not deliver twice. Size the house, or add a solvency lock before `requestrand` (see the dice quest).
+- The contract account needs `eosio.code` on active to call `requestrand` and to pay winners.
+- Deploy account is not the repo name.
 
-The extra above the stake is reserved from `bank` when the bet is placed. A second bet that needs the same extra is refused. On heads the reserve pays the extra. On tails the stake and the reserve return to the bank.
+## Vectors
 
-`receiverand` and `randnotify` use the same function. The first accepted delivery pays once. The other callback with the same 32 bytes is recorded and does not pay again. A different 32 bytes is refused. One path is enough to resolve. Waiting for both would stall a legacy `receiverand`-only contract.
+PX-VEC-05 (synchronous RNG and modulo bias), PX-VEC-01 (fake `eosio.token` notify).
 
-`requestrand` in `client/` is an unsigned action body: `assoc_id`, `signing_value`, `caller`, account `orng.wax`. It does not stake RNG credits. v3 may require credits or a per-request fee. That payment is not in this repo.
-
-A `check` that fails inside a notify fails the sender transaction. The mismatch rule is the pure function throwing. It was not executed inside a notify.
-
-## Run
-
-```bash
-npm test
-```
-
-No host is called.
+Private while the vector suite is open.
