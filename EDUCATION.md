@@ -28,6 +28,10 @@ The tested rule refuses:
 
 These checks stop zero-value bets, invalid choices, and double-spends.
 
+## Timeout refund
+
+A production escrow must also allow the player to reclaim funds if the random result never arrives. That path is not yet tested. Without it, a delayed or missing callback permanently locks the stake.
+
 ## What is not yet done
 
 No call to `orng.wax` is made. No RNG credits are spent. The C++ sketch is uncompiled. The TypeScript rule is the source of truth until a deterministic build matches it.
