@@ -1,23 +1,41 @@
 # Education
 
-Quest 004. The tested rule is the escrow and the bias-free coinflip resolution.
+Example of a bias-free coinflip that locks an escrow until a random result arrives and pays exactly once.
 
-## The rule that was executed
+## Why rejection sampling
 
-- A 10000 unit wager resolves to 19600 on a win (house edge applied).
-- The same random bytes pay only once.
-- A value that would introduce modulo bias (254 in the tested range) causes a rerequest.
+A 256-bit random value reduced with a simple modulo can be biased when the range does not divide the full space evenly. The tested rule rejects values that would fall into the biased remainder and requests a fresh random instead. This keeps heads and tails equally likely.
 
-`npm test` runs that rule. It does not call `orng.wax` and it does not spend RNG credits.
+## Authorization and once-only payout
 
-## Dual callback
+Only the player who placed the bet may create the escrow. The resolution path (whether `randnotify` or `receiverand`) must:
 
-ORNG v3 can deliver via `randnotify` (preferred) or the legacy `receiverand`. Both paths must resolve the same association id exactly once. The tested rule enforces the once-only property.
+- Authenticate that the random result comes from `orng.wax`.
+- Look up the escrow by association id.
+- Pay or refund exactly once, then erase the escrow.
+- Refuse a second delivery of the same id.
 
-## Sketch
+A missing once-only check lets an attacker replay a favorable result.
 
-`contracts/src/px_coinflip.cpp` is uncompiled. It is not the integration. The TypeScript rule is the source of truth until a deterministic build exists.
+## Negative and out-of-range inputs
 
-## Client
+The tested rule refuses:
 
-The requestrand action builder returns an unsigned body. It does not broadcast.
+- A non-positive wager.
+- A choice outside {0, 1}.
+- An association id that does not exist.
+- A second resolution of an already-settled id.
+
+These checks stop zero-value bets, invalid choices, and double-spends.
+
+## What is not yet done
+
+No call to `orng.wax` is made. No RNG credits are spent. The C++ sketch is uncompiled. The TypeScript rule is the source of truth until a deterministic build matches it.
+
+## Attack surface to keep closed
+
+- Modulo bias.
+- Replay of a winning random result.
+- Resolution by anyone other than the authorized callback path.
+- Escrow that can be withdrawn before resolution or after a double callback.
+- Missing timeout refund path (not yet tested).
