@@ -121,3 +121,30 @@ test("two bets cannot share a bank that only covers one", () => {
     /bank/,
   );
 });
+
+test("zero stake is refused", () => {
+  assert.throws(
+    () =>
+      place(emptyBooks(100n), {
+        id: "1",
+        player: "alice",
+        stake: "0",
+        signingValue: "1",
+      }),
+    /bad stake/,
+  );
+});
+
+test("deliver on missing bet is refused", () => {
+  assert.throws(() => deliver(emptyBooks(0n), "1", heads, "randnotify"), /missing bet/);
+});
+
+test("bad random hex is refused", () => {
+  const open = place(emptyBooks(0n), {
+    id: "1",
+    player: "alice",
+    stake: "1",
+    signingValue: "1",
+  });
+  assert.throws(() => deliver(open, "1", "zz", "randnotify"), /bad random/);
+});
