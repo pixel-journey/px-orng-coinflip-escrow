@@ -1,31 +1,34 @@
-# px-orng-coinflip-escrow
+# Coinflip escrow: 19600/10000 edge and dual-path delivery
 
-> **Domain:** ORNG coinflip escrow  
+> **Domain:** WAX ORNG — coinflip  
 > **Sources:** [SOURCES.md](SOURCES.md)  
-> **Vault:** [px-contract-examples-vault](https://github.com/pixel-journey/px-contract-examples-vault)
+> **Path:** [ORNG-LEARNING-PATH.md](https://github.com/pixel-journey/px-contract-examples-vault/blob/main/docs/ORNG-LEARNING-PATH.md)
 
-House-edge coin flip escrow for an `orng.wax` result. Private. Not deployed. `orng.wax` was not called.
+**Goal:** Heads/tails with **200 bps edge** (`19600/10000`), bank reserve of the extra, rejection of bytes 254–255, and once-only settle across `randnotify` / `receiverand`.
 
-Official randomness service: [wax-orng](https://github.com/worldwide-asset-exchange/wax-orng). Delivery hygiene: [dual-callback](https://github.com/pixel-journey/px-orng-dual-callback-idempotent), [v3 starter](https://github.com/pixel-journey/px-orng-v3-randnotify-starter).
+**Code under test:** `npm test` (+ client action tests). No live `orng.wax`.
 
-## What is true
+**Official:** [wax-orng](https://github.com/worldwide-asset-exchange/wax-orng).
 
-The player calls heads. The first byte of the 32-byte random value is the draw (not `uint64 % 2`).
+## Learning materials
 
-| Byte | Result |
+| Doc | Role |
 | --- | --- |
-| 0–126 | heads |
-| 127–253 | tails |
-| 254–255 | rejected / rerequest |
+| [EDUCATION.md](EDUCATION.md) | Full course |
+| [WORKED-EXAMPLES.md](WORKED-EXAMPLES.md) | Bytes, edge, dual deliver, rerequest |
+| [TIPS.md](TIPS.md) | Reserve and dual-path |
+| [SECURITY.md](SECURITY.md) | Solvency and mismatch |
+| [SOURCES.md](SOURCES.md) | Official links |
 
-Payout on heads is `stake * 19600 / 10000` (200 bps edge). Extra is reserved from `bank` at bet time. `receiverand` and `randnotify` share one delivery function; first accepted pays once.
+## What is true (executed)
 
-`requestrand` client body is unsigned and does not stake RNG credits. Uncompiled C++ sketch is **not** the tested rule.
-
-## Run
+- `10000` stake → `19600` heads payout; tails returns stake+extra to bank.
+- Bytes 254–255 → rerequest, not a face.
+- Second delivery with same random is idempotent; different random refused.
+- Place without bank extra refused.
 
 ```bash
 npm test
 ```
 
-See [SOURCES.md](SOURCES.md).
+MIT — Pixel Journey
