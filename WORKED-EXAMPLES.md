@@ -1,31 +1,47 @@
-# Worked examples — coinflip
+# Worked examples — coinflip escrow
 
-Constants: `PAYOUT = stake * 19600 / 10000`, `ACCEPT_BELOW = 254`, `HEADS_BELOW = 127`.
+`winPayout(10000n)` is `19600n` (200 bps edge on even money). `winPayout(1n)` is `1n`. `winPayout(3n)` is `5n`.
 
-## Example A — fair mapping
-
-| byte0 | Result |
+| Byte | Class |
 | --- | --- |
-| 0..126 | heads |
-| 127..253 | tails |
-| 254, 255 | reject → rerequest |
+| 0 and 126 | heads |
+| 127 and 253 | tails |
+| 254 and 255 | reject |
 
-## Example B — edge payout
+Test hex: heads `00`+`11`×31, tails `7f`+`22`×31, reject `fe`+`33`×31.
 
-`winPayout(10000n) === 19600n`. Heads pays that amount; tails pays 0 and bank recovers stake + extra. Heads does **not** increase bank.
+## Win
 
-## Example C — reserve at place
+Bank starts at `9600` (the extra). Alice stakes `10000`, signing value `7`.
 
-Bank must hold `payout - stake` before the bet is accepted. Insolvent place refused.
+After place: bank `0`, escrow `10000`, reserved `9600`.
 
-## Example D — dual delivery
+`deliver(..., heads, "randnotify")` → outcome heads, payout `19600`, all pots `0`.
 
-First `deliver` with `randnotify` settles. Second with `receiverand` and **same** random is a no-op that may record the source; different random → `random mismatch`.
+## Loss
 
-## Example E — rerequest
+Same place, deliver tails via `receiverand` → payout `0`, bank `19600` (stake + reserve).
 
-Reject → status `rerequest`. `rerequest` needs a **new** signing value not in `usedSigningValues`.
+## Dual callback, same bytes
 
-## Example F — unsigned client
+First `receiverand` with heads, second `randnotify` with the **same** hex: sources list both paths, payout still `19600`, no double pay.
 
-`client/requestrand-action.ts` builds an unsigned request body (`sent: false`). Not broadcast.
+Second path with **different** hex throws `random mismatch`.
+
+## Rerequest on 254
+
+Stake `1`, bank `0`. Deliver reject → status `rerequest`, escrow stays `1`.
+
+`rerequest` with the same signing value `9` throws `duplicate signing value`.
+New signing value `10` reopens. Deliver heads → payout `1`.
+
+## Other refusals
+
+| Case | Error |
+| --- | --- |
+| Second bet when bank only covers one reserve | bank |
+| Stake `0` | bad stake |
+| Deliver missing id | missing bet |
+| Entropy `zz` | bad random |
+
+No live `orng.wax`. Callback names are labels on the books.
