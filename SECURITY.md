@@ -1,22 +1,37 @@
-# Security notes — ORNG coinflip escrow
+# Security — ORNG coinflip escrow
 
-## Authorization
+## Closed in tests
 
-- Only the player may create the escrow for their own account.
-- Resolution (via `randnotify` or `receiverand`) must authenticate that the random result originates from `orng.wax`.
-- A second delivery of the same association id must be a no-op or a hard refusal after the escrow has been erased.
+| Issue | Behavior |
+| --- | --- |
+| Zero / bad stake | refused |
+| Bank cannot cover `payout - stake` | refused at **place** |
+| Second concurrent max bet on one extra | bank refusal |
+| Bytes 254 / 255 | **rerequest**, not house win |
+| Second deliver same entropy | no double pay |
+| Second deliver **different** entropy | `random mismatch` |
+| Duplicate signing value after rerequest | refused |
+| Missing bet id / bad entropy shape | refused |
 
-## Inputs
+Win sets `bet.payout` only. It does not mint tokens into a player balance in this lab.
 
-- Wager amount must be positive.
-- Choice must be 0 or 1.
-- Association id must exist and must not already be settled.
-- Values that would introduce modulo bias are rejected and cause a rerequest.
+## Authorization (production still needs)
 
-## Once-only and replay
+| Concern | Guidance |
+| --- | --- |
+| Oracle path | `require_auth(orng.wax)` on `randnotify` / `receiverand` |
+| Player path | `require_auth(player)` on place |
+| Dual names | One resolver — [dual-callback](https://github.com/pixel-journey/px-orng-dual-callback-idempotent) |
+| Credits | Gate before place — [credit bucket](https://github.com/pixel-journey/px-orng-credit-bucket-monitor) |
+| Token move | Transfer stake in and payout out in the same atomic path as the book when possible |
 
-The escrow is erased on resolution. Replaying the same random bytes or the same association id must not pay twice. Missing this check is a direct loss of funds.
+## Attack angles the tests encode
 
-## Current status
+1. **Modulo bias** — using the full 0..255 range for a fair coin.
+2. **Insolvent accept** — place without reserved extra.
+3. **Double pay** — two callback names without a shared resolved flag.
+4. **Entropy swap** — second delivery tries to flip the outcome.
 
-A tested TypeScript rule exists for the payout amount, the once-only property, and the bias rejection. No call to `orng.wax` is made. The C++ sketch is uncompiled. The TypeScript rule is the source of truth until a deterministic build matches it.
+## Honesty limits
+
+No call to `orng.wax`. Callback names are labels on the books. C++ sketches are uncompiled. Prefer [wax-orng](https://github.com/worldwide-asset-exchange/wax-orng) on WAX mainnet.
