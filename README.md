@@ -2,7 +2,7 @@
 
 > **Domain:** WAX ORNG — coinflip  
 > **Sources:** [SOURCES.md](SOURCES.md)  
-> **Path:** [ORNG-LEARNING-PATH.md](https://github.com/pixel-journey/px-contract-examples-vault/blob/main/docs/ORNG-LEARNING-PATH.md)
+> **Path:** `px-contract-examples-vault` (private index; not this public course)
 
 **Goal:** Heads/tails with **200 bps edge** (`19600/10000`), bank reserve of the extra, rejection of bytes 254–255, and once-only settle across `randnotify` / `receiverand`.
 

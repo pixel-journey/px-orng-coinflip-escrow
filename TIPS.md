@@ -33,4 +33,4 @@
 | Token payout on win | After once-resolve; same action if possible |
 | Credits before place | [credit bucket](https://github.com/pixel-journey/px-orng-credit-bucket-monitor) |
 
-Related: [dice](https://github.com/pixel-journey/px-orng-dice-multi-tier-payout) · [roulette](https://github.com/pixel-journey/px-orng-roulette-wheel-escrow) · [ORNG path](https://github.com/pixel-journey/px-contract-examples-vault/blob/main/docs/ORNG-LEARNING-PATH.md) · [wax-orng](https://github.com/worldwide-asset-exchange/wax-orng)
+Related: [dice](https://github.com/pixel-journey/px-orng-dice-multi-tier-payout) · [roulette](https://github.com/pixel-journey/px-orng-roulette-wheel-escrow) · `px-contract-examples-vault` (private index; not this public course) · [wax-orng](https://github.com/worldwide-asset-exchange/wax-orng)
